@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            justify-content: center;
+            align-items: center;
+        }
+        .hidden { display: none; }
+        .progress { width: 200px; height: 20px; background: #ddd; margin-top: 10px; position: relative; }
+        .progress-bar { height: 100%; background: blue; width: 0%; }
+    </style>
+</head>
+<body>
+    <input type="file" id="fileInput" accept=".csv">
+    <button id="uploadBtn" onclick="uploadCSV()">Upload</button>
+    <div class="progress hidden">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p id="status"></p>
+
+    <script>
+        async function uploadCSV() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("No file selected");
+                return;
+            }
+
+            const url = "http://localhost:3000/upload_csv"; 
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const progressBar = document.getElementById("progressBar");
+            const progressContainer = document.querySelector(".progress");
+            const statusText = document.getElementById("status");
+
+            progressContainer.classList.remove("hidden");
+
+            await axios.post(url, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+                onUploadProgress: (progressEvent) => {
+                    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    progressBar.style.width = percent + "%";
+                    statusText.innerText = percent + "% uploaded";
+                },
+            }).then(() => {
+                alert("Upload Successful!");
+                progressBar.style.width = "100%";
+                statusText.innerText = "Upload Complete!";
+            }).catch(() => {
+                alert("Upload Failed!");
+                statusText.innerText = "Upload Failed!";
+            });
+        }
+    </script>
+
+</body>
+</html>
