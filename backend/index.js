@@ -22,5 +22,5 @@ app.post("/upload_csv",upload.single("file"),async(req,res) => {
 
 
 app.listen(port,() => {
-    console.log("server berlajan....")
+    console.log("server berjalan....")
 })
