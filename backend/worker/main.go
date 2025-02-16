@@ -27,7 +27,7 @@ func main() {
 			return
 		}
 
-		data := usecase.ProcessCsv(bodyRequest.Filename)
+		data, err := usecase.ProcessCsv(bodyRequest.Filename)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadGateway, gin.H{
@@ -36,7 +36,7 @@ func main() {
 			return
 		}
 
-		ctx.JSON(200, gin.H{"msg": data})
+		ctx.JSON(200, data)
 	})
 	app.Run(":8080")
 }

@@ -24,7 +24,7 @@ func CreateKaryawan(karyawan []models.Karyawan, batchSize int) error {
 	return nil
 }
 
-func WorkerPool(id int, batch <-chan []models.Karyawan, wg *sync.WaitGroup, batchSize int) {
+func WorkerPool(id int, batch <-chan []models.Karyawan, result chan<- []models.Karyawan, wg *sync.WaitGroup, batchSize int) {
 	defer wg.Done()
 
 	for row := range batch {
@@ -32,32 +32,41 @@ func WorkerPool(id int, batch <-chan []models.Karyawan, wg *sync.WaitGroup, batc
 
 		if err := CreateKaryawan(row, batchSize); err != nil {
 			fmt.Printf("Worker %d gagal insert data: %v\n", id, err)
+		} else {
+			result <- row
 		}
 	}
 }
 
-func ProcessCsv(filename string) string {
+func ProcessCsv(filename string) ([]models.Karyawan, error) {
 	path := "uploads/" + filename
-	file, _ := os.Open(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membuka file: %v", err)
+	}
 	defer file.Close()
+
 	csvNewReader := csv.NewReader(file)
-	read, _ := csvNewReader.ReadAll()
+	read, err := csvNewReader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("gagal membaca CSV: %v", err)
+	}
 
 	batch := 200
 	worker := 4
 	var wg sync.WaitGroup
-	var batchChannel = make(chan []models.Karyawan, 10)
+	batchChannel := make(chan []models.Karyawan, 10)
+	resultChannel := make(chan []models.Karyawan, 10)
 
 	for i := 0; i < worker; i++ {
 		wg.Add(1)
-		go WorkerPool(i, batchChannel, &wg, batch)
+		go WorkerPool(i, batchChannel, resultChannel, &wg, batch)
 	}
 
 	go func() {
 		var data []models.Karyawan
 		for _, v := range read {
-			var salary = v[3]
-			salaryInt, _ := strconv.Atoi(salary)
+			salaryInt, _ := strconv.Atoi(v[3])
 			data = append(data, models.Karyawan{
 				Name:       v[0],
 				Position:   v[1],
@@ -76,7 +85,15 @@ func ProcessCsv(filename string) string {
 		close(batchChannel)
 	}()
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(resultChannel)
+	}()
 
-	return "success upload file"
+	var finalData []models.Karyawan
+	for batch := range resultChannel {
+		finalData = append(finalData, batch...)
+	}
+
+	return finalData, nil
 }

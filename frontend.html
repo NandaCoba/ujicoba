@@ -3,25 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload CSV</title>
+    <title>Upload CSV Nanda 🥶</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
-            justify-content: center;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
         }
         .hidden { display: none; }
-        .progress { width: 200px; height: 20px; background: #ddd; margin-top: 10px; position: relative; }
+        .progress { width: 300px; height: 20px; background: #ddd; margin-top: 10px; position: relative; }
         .progress-bar { height: 100%; background: blue; width: 0%; }
+        pre { 
+            width: 80%;
+            max-width: 600px;
+            padding: 10px;
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+    .upload-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;  
+}
     </style>
 </head>
 <body>
-    <input type="file" id="fileInput" accept=".csv">
-    <button id="uploadBtn" onclick="uploadCSV()">Upload</button>
+    <div class="upload-container">
+        <input type="file" id="fileInput" accept=".csv">
+        <button id="uploadBtn" onclick="uploadCSV()">Upload</button>
+    </div>
+    
     <div class="progress hidden">
         <div class="progress-bar" id="progressBar"></div>
     </div>
     <p id="status"></p>
+    <pre id="response"></pre>
 
     <script>
         async function uploadCSV() {
@@ -39,8 +63,10 @@
             const progressBar = document.getElementById("progressBar");
             const progressContainer = document.querySelector(".progress");
             const statusText = document.getElementById("status");
+            const responseText = document.getElementById("response");
 
             progressContainer.classList.remove("hidden");
+            responseText.textContent = ""; 
 
             await axios.post(url, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -49,13 +75,15 @@
                     progressBar.style.width = percent + "%";
                     statusText.innerText = percent + "% uploaded";
                 },
-            }).then(() => {
+            }).then((response) => {
                 alert("Upload Successful!");
                 progressBar.style.width = "100%";
                 statusText.innerText = "Upload Complete!";
-            }).catch(() => {
+                responseText.textContent = JSON.stringify(response.data, null, 2);
+            }).catch((error) => {
                 alert("Upload Failed!");
                 statusText.innerText = "Upload Failed!";
+                responseText.textContent = error.response ? JSON.stringify(error.response.data, null, 2) : "Error uploading file";
             });
         }
     </script>
