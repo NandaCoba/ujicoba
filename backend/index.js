@@ -12,7 +12,7 @@ app.use(cors())
 app.post("/upload_csv",upload.single("file"),async(req,res) => {
     try {
         const file = req.file.filename; 
-        const data = await axios.post(process.env.URL, { "filename" : file  },{headers: { "Content-Type": "application/json" }});
+        const data = await axios.post(process.env.URL + "/proccess", { "filename" : file  },{headers: { "Content-Type": "application/json" }});
 
         if (!data) return res.status(500).json({ message : "Failed Upload CSV"})
         return res.status(200).json({ data : data.data})

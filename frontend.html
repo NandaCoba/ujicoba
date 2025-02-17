@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload CSV Nanda 🥶</title>
+    <title>Upload CSV & Import Otomatis 🥶</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
@@ -27,12 +27,11 @@
             overflow-x: auto;
             white-space: pre-wrap;
         }
-
-    .upload-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;  
-}
+        .upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;  
+        }
     </style>
 </head>
 <body>
@@ -41,9 +40,14 @@
         <button id="uploadBtn" onclick="uploadCSV()">Upload</button>
     </div>
     
-    <div class="progress hidden">
-        <div class="progress-bar" id="progressBar"></div>
+    <div class="progress hidden" id="uploadProgress">
+        <div class="progress-bar" id="uploadProgressBar"></div>
     </div>
+
+    <div class="progress hidden" id="responseProgress">
+        <div class="progress-bar" id="responseProgressBar"></div>
+    </div>
+
     <p id="status"></p>
     <pre id="response"></pre>
 
@@ -60,29 +64,52 @@
             const formData = new FormData();
             formData.append("file", file);
 
-            const progressBar = document.getElementById("progressBar");
-            const progressContainer = document.querySelector(".progress");
+            const uploadProgressBar = document.getElementById("uploadProgressBar");
+            const uploadProgressContainer = document.getElementById("uploadProgress");
+            const responseProgressBar = document.getElementById("responseProgressBar");
+            const responseProgressContainer = document.getElementById("responseProgress");
             const statusText = document.getElementById("status");
             const responseText = document.getElementById("response");
 
-            progressContainer.classList.remove("hidden");
+            uploadProgressContainer.classList.remove("hidden");
+            responseProgressContainer.classList.add("hidden");
             responseText.textContent = ""; 
 
             await axios.post(url, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 onUploadProgress: (progressEvent) => {
                     const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    progressBar.style.width = percent + "%";
+                    uploadProgressBar.style.width = percent + "%";
                     statusText.innerText = percent + "% uploaded";
                 },
-            }).then((response) => {
-                alert("Upload Successful!");
-                progressBar.style.width = "100%";
+            }).then(async (response) => {
+                uploadProgressBar.style.width = "100%";
                 statusText.innerText = "Upload Complete!";
-                responseText.textContent = JSON.stringify(response.data, null, 2);
+
+                uploadProgressContainer.classList.add("hidden");
+                responseProgressContainer.classList.remove("hidden");
+
+                let percent = 0;
+                const interval = setInterval(() => {
+                    percent += 10;
+                    if (percent <= 100) {
+                        responseProgressBar.style.width = percent + "%";
+                        statusText.innerText = "Processing response...";
+                    }
+                }, 200);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    responseProgressBar.style.width = "100%";
+                    responseProgressContainer.classList.add("hidden");
+                    statusText.innerText = "Process Complete!";
+                    responseText.textContent = JSON.stringify(response.data, null, 2);
+                }, 500);
+
             }).catch((error) => {
-                alert("Upload Failed!");
                 statusText.innerText = "Upload Failed!";
+                uploadProgressContainer.classList.add("hidden");
+                responseProgressContainer.classList.add("hidden");
                 responseText.textContent = error.response ? JSON.stringify(error.response.data, null, 2) : "Error uploading file";
             });
         }
