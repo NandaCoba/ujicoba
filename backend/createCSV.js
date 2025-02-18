@@ -5,7 +5,7 @@ const createBatch = async () => {
     const filePath = path.join(__dirname, "data.csv");
     const writeStream = fs.createWriteStream(filePath, { flags: "a" });
 
-    for (let index = 1; index <= 5_000; index++) {
+    for (let index = 1; index <= 10_000; index++) {
         writeStream.write(`nanda_${index},Software Engineer,IT,7000000\n`);
     }
 
